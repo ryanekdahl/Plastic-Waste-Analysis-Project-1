@@ -34,40 +34,7 @@ Csvs from 2019 and 2020 were stacked to make one overall plastic.csv dataset. Th
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```{r}
-
-library(tidyverse)
 sumCountry <- function(countryName) {
   countryData <- plastics %>% 
     filter(country == countryName) %>%
