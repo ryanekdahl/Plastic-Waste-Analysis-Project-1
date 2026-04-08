@@ -31,3 +31,36 @@ Csvs from 2019 and 2020 were stacked to make one overall plastic.csv dataset. Th
 ![RQ1](sketch1.png)
 ![](sketch2.png)
 
+## Grand Total Summary Statistics for each Country
+
+```{r}
+#| label: using existing column with custom function and iteration
+
+country_total_summary <- function(ctry) {
+  
+  if (
+    !(ctry %in% plastics$country)
+      ) {
+    stop(
+      paste("Country not found:", ctry)
+         )
+  }
+  
+  totals <- plastics |>
+    filter(country == ctry) |>
+    pull(grand_total)
+  
+  tibble(Country = ctry,
+         Mean = mean(totals, na.rm = TRUE),
+         SD = sd(totals, na.rm = TRUE),
+         Median = median(totals, na.rm = TRUE),
+         IQR = IQR(totals, na.rm = TRUE),
+         Sum = sum(totals, na.rm = TRUE)
+         )
+}
+
+plastics |>
+  distinct(country) |>
+  pull(country) |>
+  map_dfr(.f = country_total_summary)
+```
