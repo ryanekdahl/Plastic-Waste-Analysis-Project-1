@@ -1,6 +1,6 @@
 ---
 title: "Report 1"
-author: "Taiga Sobajima"
+author: "Nathan Lee, Noah Nayve, Ryan Ekdahl, Taiga Sobajima"
 format: html
 ---
 
@@ -37,9 +37,11 @@ Csvs from 2019 and 2020 were stacked to make one overall plastic.csv dataset. Th
 
 ## Average Plastic Type Breakdown for a Given Country
 ```{r}
+#| label: using existing column with custom function
+# Function to create breakdown of plastic type averages given a country
 sumCountry <- function(countryName) {
-  countryData <- plastics %>% 
-    filter(country == countryName) %>%
+  countryData <- plastics |>
+    filter(country == countryName) |>
     summarize(
       avePlastic = mean(grand_total, na.rm = TRUE), 
       aveHdpe = mean(hdpe, na.rm = TRUE),
@@ -50,26 +52,39 @@ sumCountry <- function(countryName) {
       avePvc = mean(pvc, na.rm = TRUE)
     )
 }
+
+# Example of calling the function
 print(sumCountry("Argentina"))
 ```
 
 ## Grand Total Summary Statistics for each Country
 ```{r}
 #| label: using existing column with custom function and iteration
+# Function to create summary statistics of grand total given a country
 country_total_summary <- function(ctry) {
-  if (!(ctry %in% plastics$country)) {
-    stop(paste("Country not found:", ctry))
+  # Check to see if given country is in data
+  if (
+    !(ctry %in% plastics$country)
+    ) {
+    stop(
+      paste("Country not found:", ctry)
+      )
   }
+  
+  # Creating a tibble with summary statistics
   totals <- plastics |>
     filter(country == ctry) |>
     pull(grand_total)
-  tibble(Country = ctry,
-         Mean = mean(totals, na.rm = TRUE),
-         SD = sd(totals, na.rm = TRUE),
-         Median = median(totals, na.rm = TRUE),
-         IQR = IQR(totals, na.rm = TRUE),
-         Sum = sum(totals, na.rm = TRUE))
+  tibble(
+    Country = ctry,
+    Mean = mean(totals, na.rm = TRUE),
+    SD = sd(totals, na.rm = TRUE),
+    Median = median(totals, na.rm = TRUE),
+    IQR = IQR(totals, na.rm = TRUE),
+    Sum = sum(totals, na.rm = TRUE))
 }
+
+# Applying function to all countries
 plastics |>
   distinct(country) |>
   pull(country) |>
@@ -78,14 +93,26 @@ plastics |>
 
 ## Percent Plastic Type by Country and Company
 ```{r}
-#Returns the percent of plastic produced for a given country and parent company.
-percent_plastic_type <- function(country_name, parent_company_name, plastic_type){
+#| label: using modified columns with custom function
+# Function creating percent of plastic produced given a country and parent company
+percent_plastic_type <- function(country_name,
+                                 parent_company_name,
+                                 plastic_type){
   result <- plastics |>
-    filter(country == country_name, parent_company == parent_company_name) |>
+    filter(country == country_name, 
+           parent_company == parent_company_name) |>
     mutate(percent_plastic_type = .data[[plastic_type]] / grand_total) |>
-    select(country, year, parent_company, all_of(plastic_type), percent_plastic_type) |>
-    filter(!is.na(percent_plastic_type))
+    select(
+      country,
+      year,
+      parent_company,
+      all_of(plastic_type),
+      percent_plastic_type) |>
+    filter(
+      !is.na(percent_plastic_type)
+      )
   
+  # Checking if there is no output
   if (nrow(result) == 0) {
     stop("Grand total is zero or no data found, cannot calculate percentage.")
   }
@@ -93,23 +120,25 @@ percent_plastic_type <- function(country_name, parent_company_name, plastic_type
   head(result, 2)
 }
 
+# Example of calling the function
 percent_plastic_type("Argentina", "Nestle", "pet")
 ```
 
 ## Top 10 Countries by LDPE Proportion of Polyethylene Plastic Waste
 ```{r}
+#| label: using modified columns with custom function and iteration
+# Function creating LDPE proportion of polyethylene plastic waste
 dpe_prop <- function(country_name) {
-  plastics %>%
-    filter(country == country_name) %>%
-    mutate(ldpe_prop = ldpe / (hdpe + ldpe)) %>%
-    summarise(avg_ldpe_prop = mean(ldpe_prop, na.rm = TRUE)) %>%
+  plastics |>
+    filter(country == country_name) |>
+    mutate(ldpe_prop = ldpe / (hdpe + ldpe)) |>
+    summarise(avg_ldpe_prop = mean(ldpe_prop, na.rm = TRUE)) |>
     pull(avg_ldpe_prop)
 }
 
 # Apply across all countries
-plastics %>%
-  distinct(country) %>%
-  mutate(ldpe_proportion = map_dbl(country, dpe_prop)) %>%
+plastics |>
+  distinct(country) |>
+  mutate(ldpe_proportion = map_dbl(country, dpe_prop)) |>
   slice_max(ldpe_proportion, n = 10)
-
 ```
